@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>States of Matter Sandbox</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,sans-serif;background:#101827;color:#fff;display:grid;place-items:center;min-height:100vh;padding:20px}
+.app{width:min(650px,100%);text-align:center;background:#1b2940;padding:25px;border-radius:22px;box-shadow:0 15px 40px #0005}
+h1{margin:0 0 8px;color:#70d6ff}
+p{color:#b8c7dc}
+canvas{width:100%;height:auto;aspect-ratio:1.6;background:#0c1627;border:1px solid #34445e;border-radius:15px;margin:15px 0}
+.state{font-size:27px;font-weight:bold;margin:8px}
+input{width:100%;accent-color:#70d6ff;cursor:pointer}
+.labels{display:flex;justify-content:space-between;color:#aebed2;font-size:13px}
+.info{background:#263751;padding:13px;border-radius:12px;margin-top:18px;color:#dceaff}
+</style>
+</head>
+<body>
+<div class="app">
+<h1>🌡️ States of Matter</h1>
+<p>Change the temperature and watch particles transform!</p>
+<canvas id="canvas" width="600" height="375"></canvas>
+<div class="state" id="state">🧊 Solid</div>
+<input type="range" id="temp" min="0" max="100" value="15">
+<div class="labels"><span>❄️ Cold</span><span>Temperature</span><span>🔥 Hot</span></div>
+<div class="info" id="info">Particles vibrate in fixed positions, forming a solid.</div>
+</div>
+<script>
+const canvas=document.getElementById("canvas"),ctx=canvas.getContext("2d");
+const slider=document.getElementById("temp"),state=document.getElementById("state"),info=document.getElementById("info");
+const particles=Array.from({length:65},()=>({x:Math.random()*560+20,y:Math.random()*335+20,vx:0,vy:0,angle:Math.random()*6.28}));
+let temperature=15;
+function update(){
+ temperature=+slider.value;
+ let type=temperature<30?"Solid":temperature<70?"Liquid":"Gas";
+ state.textContent=type==="Solid"?"🧊 Solid":type==="Liquid"?"💧 Liquid":"💨 Gas";
+ info.textContent=type==="Solid"?"Particles vibrate in fixed positions, forming a solid.":type==="Liquid"?"Particles move around one another while staying close together.":"Particles move rapidly and spread throughout the container.";
+}
+slider.addEventListener("input",update);
+function draw(){
+ ctx.clearRect(0,0,600,375);
+ let type=temperature<30?0:temperature<70?1:2;
+ let speed=0.15+temperature*0.055;
+ particles.forEach((p,i)=>{
+ if(type===0){
+ let col=i%13,row=Math.floor(i/13);
+ let tx=105+col*32,ty=75+row*32;
+ p.x+=(tx-p.x)*0.08+(Math.random()-.5)*speed;
+ p.y+=(ty-p.y)*0.08+(Math.random()-.5)*speed;
+ }else{
+ p.x+=p.vx;p.y+=p.vy;
+ if(Math.random()<0.08){p.vx+=(Math.random()-.5)*speed;p.vy+=(Math.random()-.5)*speed;}
+ let limit=type===1?65:0;
+ if(p.x<limit||p.x>600-limit)p.vx*=-1;
+ if(p.y<limit||p.y>375-limit)p.vy*=-1;
+ if(type===1){
+ let cx=300,cy=190;
+ if(p.x<cx-110||p.x>cx+110)p.vx+=(cx-p.x)*0.0008;
+ if(p.y<cy-75||p.y>cy+75)p.vy+=(cy-p.y)*0.0008;
+ }
+ let max=type===1?2:5;
+ let v=Math.hypot(p.vx,p.vy);
+ if(v>max){p.vx*=max/v;p.vy*=max/v;}
+ }
+ ctx.beginPath();
+ ctx.arc(p.x,p.y,6,0,Math.PI*2);
+ ctx.fillStyle=type===0?"#75d8ff":type===1?"#62e6b5":"#ffae68";
+ ctx.fill();
+ ctx.strokeStyle="#ffffff55";ctx.stroke();
+ });
+ requestAnimationFrame(draw);
+}
+update();draw();
+</script>
+</body>
+</html>
